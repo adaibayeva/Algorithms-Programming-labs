@@ -1,0 +1,90 @@
+/*evaluate the absolute frequency of all
+strings which appear in the file*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define LINE 1000+1
+
+typedef struct word_s word_t;
+struct word_s{
+    char *word;
+    int count;
+    word_t *next;
+};
+word_t *input_read(FILE *);
+word_t *findWord(word_t *, char*);
+void sortWord(FILE *, word_t *);
+int main(int argc, char *argv[])
+{
+    if(argc!=3){
+        fprintf(stderr, "Incorrect number of arguments. Type "file1_name.txt file2_name.txt"\n");
+        exit(EXIT_FAILURE);
+    }
+    word_t *head = NULL;
+    FILE* fn;
+    fn = fopen(argv[1],"r");
+    if(fn==NULL){
+        fprintf(stderr, "Cannot open the file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    head = input_read(fn);
+    fclose(fn);
+
+    fn = fopen(argv[2],"w");
+    if(fn==NULL){
+        fprintf(stderr, "Cannot open the file.\n");
+        exit(EXIT_FAILURE);
+    }
+    writeWord(fn, head);
+    fclose(fn);
+
+    free(head);
+    return;
+}
+
+word_t *input_read(FILE *fp){
+    word_t *temp, *head=NULL;
+    char buffer[LINE];
+    while(fscanf(fp, "%s", buffer)!=EOF){
+        for(int i=0; i<strlen(buffer);i++){
+            buffer[i]=tolower(buffer[i]);
+        }
+        temp = findWord(head, buffer);
+        if(temp!=NULL){
+            temp->count++;
+        } else {
+            temp = (word_t*)malloc(sizeof(word_t));
+            temp->word=strdup(buffer);
+            temp->count=1;
+            temp->next=head;
+            head = temp;
+        }
+    }
+    return head;
+}
+
+word_t *findWord(word_t *head, char*word){
+    word_t *temp=head;
+    while(temp!=NULL){
+        if(strcmp(temp->word, word)==0){
+            return temp;
+        }
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+void writeWord(FILE *fp, word_t *head){
+
+    word_t *temp=head;
+    while(temp!=NULL){
+            fprintf(fp,"%s - %d \n", temp->word, temp->count);
+            temp=temp->next;
+    }
+
+    return;
+}
