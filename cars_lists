@@ -1,0 +1,203 @@
+/* read the name of a manufacturer (e.g, FIAT) and it print out all products (and relative prices) produced by it on standard output. */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 200
+typedef struct trait{
+    char *product;
+    int price;
+    struct trait *next;
+} trait_t;
+
+typedef struct member {
+    char *name;
+    char *id;
+    trait_t *features;
+    struct member *next;
+}member_t;
+
+member_t *read_mnfc(char *, char *);
+trait_t *read_products(char *, member_t *);
+void printALL(member_t *, trait_t *);
+void free_members(member_t *);
+void free_products(trait_t *);
+
+int main(int argc, char *argv[])
+{
+    if(argc!=3){
+        fprintf(stderr, "Incorrect number of arguments.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    member_t *cars, *tmp1, *tmp;
+    trait_t *features, *tmp2, *buf;
+
+    cars = read_mnfc(argv[1], argv[2]);
+    
+    for(tmp=cars; tmp!=NULL; tmp=tmp->next){
+        printf("%s %s \n", tmp->name, tmp->id);
+        for(buf=tmp->features; buf!=NULL; buf=buf->next){
+            printf(" - %s %d\n", buf->product, buf->price);
+        }
+    }
+
+    free_products(features);
+    free_members(cars);
+    return 0;
+}
+
+member_t *read_mnfc(char *fname1, char *fname2){
+    char buf[MAX], name[MAX], id[MAX];
+    member_t *tmp1, *head=NULL;
+    trait_t products;
+
+    trait_t *tmp2;
+    char product[MAX];
+    int price, found;
+
+    FILE *fp = fopen(fname1, "r");
+    if(fp==NULL){
+        fprintf(stderr, "Cannot open the file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while(fgets(buf, MAX, fp)!= NULL){
+        tmp1 = (member_t *)malloc(sizeof(member_t));
+        if(tmp1==NULL){
+            fprintf(stderr, "Memory allocation error.\n");
+            exit(EXIT_FAILURE);
+        }
+        sscanf(buf, "%s %s", name, id);
+        
+        tmp1->name = strdup(name);
+        tmp1->id = strdup(id);
+        tmp1->features = NULL;
+        
+        tmp1->next = head;
+        head = tmp1;
+    }
+    fclose(fp);
+
+    fp=fopen(fname2, "r");
+    if (fp==NULL){
+        fprintf(stderr, "Cannot open the file.\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("\n");
+
+    while(fgets(buf, MAX, fp)!= NULL){
+        tmp2 = (trait_t*)malloc(sizeof(trait_t));
+        if (tmp2 == NULL){
+            fprintf(stderr, "Memory allocation error.\n");
+            exit(EXIT_FAILURE);
+        }
+        sscanf(buf, "%s %s %d", id, product, &price);
+        
+        tmp2->product = strdup(product);
+        tmp2->price = price;
+        found = 0;
+        tmp1=head;
+        while(tmp1!=NULL && found == 0){
+            if(strcmp(tmp1->id, id)==0){
+                found = 1;
+            } else {
+                tmp1 = tmp1->next;
+            }
+        }
+        if(found==1){
+            tmp2->next = tmp1->features;
+            tmp1->features = tmp2;
+        } else {
+            fprintf(stdout, "There is no such a brand ...  Rule-out model\n");
+        }
+    }
+
+    fclose(fp);
+    return head;
+}
+
+trait_t *read_products(char *fname, member_t *producer){
+    trait_t *tmp1, *head=NULL;
+    member_t *tmp2;
+
+    char buf[MAX], id[MAX], product[MAX];
+    int price, found = 0;
+
+    FILE *fp=fopen(fname, "r");
+    if (fp==NULL){
+        fprintf(stderr, "Cannot open the file.\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("\n");
+    while(fgets(buf, MAX, fp)!= NULL){
+        tmp1 = (trait_t*)malloc(sizeof(trait_t));
+        if (tmp1 == NULL){
+            fprintf(stderr, "Memory allocation error.\n");
+            exit(EXIT_FAILURE);
+        }
+        sscanf(buf, "%s %s %d", id, product, &price);
+       
+        tmp1->product = strdup(product);
+        tmp1->price = price;
+        while(tmp2!=NULL && found == 0){
+            if(strcmp(tmp2->id, id)==0){
+                found = 1;
+            } else {
+                tmp2 = tmp2->next;
+            }
+        }
+        if(found==1){
+            tmp1->next = tmp2->features;
+            tmp2->features = tmp1;
+        } else {
+            fprintf(stdout, "There is no such a brand ...  Rule-out model\n");
+        }
+
+        head = tmp2;
+    }
+    fclose(fp);
+    return head;
+}
+
+void printAll(member_t *producer, trait_t *product){
+    member_t *tmp1=producer;
+    trait_t *tmp2;
+
+
+    while(tmp1!=NULL){
+        fprintf(stdout, "%s %s\n", tmp1->name, tmp1->id);
+        tmp2=tmp1->features;
+        while(tmp2!=NULL){
+            fprintf(stdout, "  - %s %d\n", tmp2->product, tmp2->price);
+            tmp2 = tmp2->next;
+        }
+        tmp1=tmp1->next;
+    }
+    return;
+}
+
+void free_members(member_t *cars){
+    member_t *car;
+
+    while(cars!=NULL){
+        car = cars;
+        cars = cars->next;
+        free(car->name);
+        free(car->id);
+        free(car);
+    }
+    return;
+}
+
+void free_products(trait_t *features){
+    trait_t *feature;
+
+    while(features!=NULL){
+        feature = features;
+        features = features->next;
+        free(feature->product);
+        free(feature);
+    }
+    return;
+}
