@@ -20,7 +20,7 @@ void sortWord(FILE *, word_t *);
 int main(int argc, char *argv[])
 {
     if(argc!=3){
-        fprintf(stderr, "Incorrect number of arguments. Type "file1_name.txt file2_name.txt"\n");
+        fprintf(stderr, "Incorrect number of arguments. Type "file_read.txt file2_write.txt"\n");
         exit(EXIT_FAILURE);
     }
     word_t *head = NULL;
